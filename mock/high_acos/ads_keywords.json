@@ -1,0 +1,82 @@
+{
+  "keywords": [
+    {
+      "keyword": "wireless mouse",
+      "match": "broad",
+      "impressions": 1185,
+      "clicks": 28,
+      "ctr": 0.02,
+      "cpc": 1.36,
+      "spend": 38.04,
+      "orders": 2,
+      "cvr": 0.07,
+      "revenue": 39.98,
+      "acos": 0.95
+    },
+    {
+      "keyword": "bluetooth mouse",
+      "match": "phrase",
+      "impressions": 1392,
+      "clicks": 19,
+      "ctr": 0.01,
+      "cpc": 0.63,
+      "spend": 11.89,
+      "orders": 1,
+      "cvr": 0.05,
+      "revenue": 19.99,
+      "acos": 0.59
+    },
+    {
+      "keyword": "silent click mouse",
+      "match": "exact",
+      "impressions": 4433,
+      "clicks": 22,
+      "ctr": 0.0,
+      "cpc": 0.79,
+      "spend": 17.39,
+      "orders": 1,
+      "cvr": 0.05,
+      "revenue": 19.99,
+      "acos": 0.87
+    },
+    {
+      "keyword": "ergonomic mouse",
+      "match": "broad",
+      "impressions": 948,
+      "clicks": 22,
+      "ctr": 0.02,
+      "cpc": 0.48,
+      "spend": 10.53,
+      "orders": 0,
+      "cvr": 0.0,
+      "revenue": 0.0,
+      "acos": 1.0
+    },
+    {
+      "keyword": "usb c mouse",
+      "match": "phrase",
+      "impressions": 4632,
+      "clicks": 37,
+      "ctr": 0.01,
+      "cpc": 0.47,
+      "spend": 17.35,
+      "orders": 2,
+      "cvr": 0.05,
+      "revenue": 39.98,
+      "acos": 0.43
+    },
+    {
+      "keyword": "gaming mouse",
+      "match": "broad",
+      "impressions": 2908,
+      "clicks": 26,
+      "ctr": 0.01,
+      "cpc": 0.91,
+      "spend": 23.57,
+      "orders": 2,
+      "cvr": 0.08,
+      "revenue": 39.98,
+      "acos": 0.59
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "asin": "B0MOCKBASE",
+  "price": 19.99,
+  "summary": {
+    "days": 7,
+    "impressions": 28657,
+    "clicks": 350,
+    "ctr": 0.01,
+    "avg_cpc": 0.57,
+    "spend": 198.85,
+    "orders": 21,
+    "cvr": 0.06,
+    "revenue": 419.79,
+    "acos": 0.47
+  },
+  "daily": [
+    {
+      "date": "2025-09-03",
+      "impressions": 5119,
+      "clicks": 37,
+      "ctr": 0.01,
+      "cpc": 0.47,
+      "spend": 17.48,
+      "orders": 3,
+      "cvr": 0.08
+    },
+    {
+      "date": "2025-09-04",
+      "impressions": 3071,
+      "clicks": 45,
+      "ctr": 0.01,
+      "cpc": 0.8,
+      "spend": 35.82,
+      "orders": 4,
+      "cvr": 0.09
+    },
+    {
+      "date": "2025-09-05",
+      "impressions": 2856,
+      "clicks": 37,
+      "ctr": 0.01,
+      "cpc": 0.4,
+      "spend": 14.68,
+      "orders": 1,
+      "cvr": 0.03
+    },
+    {
+      "date": "2025-09-06",
+      "impressions": 3452,
+      "clicks": 41,
+      "ctr": 0.01,
+      "cpc": 0.45,
+      "spend": 18.43,
+      "orders": 2,
+      "cvr": 0.05
+    },
+    {
+      "date": "2025-09-07",
+      "impressions": 5161,
+      "clicks": 74,
+      "ctr": 0.01,
+      "cpc": 0.57,
+      "spend": 42.52,
+      "orders": 5,
+      "cvr": 0.07
+    },
+    {
+      "date": "2025-09-08",
+      "impressions": 3639,
+      "clicks": 57,
+      "ctr": 0.02,
+      "cpc": 0.75,
+      "spend": 42.92,
+      "orders": 2,
+      "cvr": 0.04
+    },
+    {
+      "date": "2025-09-09",
+      "impressions": 5359,
+      "clicks": 59,
+      "ctr": 0.01,
+      "cpc": 0.46,
+      "spend": 27.0,
+      "orders": 4,
+      "cvr": 0.07
+    }
+  ]
+}

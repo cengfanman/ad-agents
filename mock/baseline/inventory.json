@@ -1,0 +1,5 @@
+{
+  "days_of_inventory": 24,
+  "restock_eta_days": 9,
+  "stockout_risk": "low"
+}
