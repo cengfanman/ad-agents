@@ -136,8 +136,15 @@ The agent demonstrates true autonomy by:
 
 ### Core Loop: Observe → Think → Act
 1. **Observe**: Gather context from scenario, previous tool results, and current state
-2. **Think**: Update hypothesis confidence scores based on collected evidence
-3. **Act**: Select the most informative tool to run next, or terminate if confident enough
+2. **Think**: Update hypothesis confidence scores based on collected evidence  
+3. **Decide**: Display tool mapping with usage status and select next tool
+4. **Act**: Execute selected tool and collect evidence, or terminate if confident enough
+
+**Enhanced Decision Display:**
+- **Tool Mapping Table**: Shows hypothesis → tools mapping with real-time status
+- **Usage Tracking**: Visual indicators (✓) for completed tools  
+- **Top Hypothesis Highlighting**: ⭐ marks the highest-confidence hypothesis
+- **Status Ratios**: Shows tool completion ratios (e.g., 1/2, 2/2) for each hypothesis
 
 ### Belief System & Information Gain
 - Maintains confidence scores (0.0-1.0) for 5 core hypotheses about ad performance issues
@@ -146,17 +153,54 @@ The agent demonstrates true autonomy by:
 - Different scenario goals lead to different initial belief distributions
 
 ### Tool Selection Heuristics
-- **High belief in H1 (Low Bids)** → prioritize `ads_metrics` to analyze bid performance
-- **High belief in H2 (Keyword Coverage)** → use `ads_metrics` + `listing_audit` for keyword analysis  
-- **High belief in H3 (Competitor Pressure)** → prioritize `competitor` tool
-- **High belief in H4 (Listing Quality)** → use `listing_audit` first
-- **High belief in H5 (Broad Match Waste)** → analyze with `ads_metrics`
+
+The agent uses a hypothesis-to-tool mapping system for optimal information gain:
+
+| Hypothesis | Primary Tools | Secondary Tools | Selection Logic |
+|------------|---------------|-----------------|-----------------|
+| **H1: Low Bids** | `ads_metrics` | - | Direct bid performance analysis |
+| **H2: Keyword Coverage** | `ads_metrics` | `listing_audit` | Keyword performance + content analysis |
+| **H3: Competitor Pressure** | `competitor` | `ads_metrics` | Market analysis first, then performance |
+| **H4: Listing Quality** | `listing_audit` | `competitor` | Quality audit + competitive context |
+| **H5: Broad Match Waste** | `ads_metrics` | - | Direct keyword waste analysis |
+
+**Tool Selection Process:**
+1. Rank hypotheses by confidence (belief score)
+2. Select tools from top 2 hypotheses' preferred tools
+3. Prefer unused tools for maximum information gain
+4. Fall back to any unused tool if preferred tools exhausted
 
 ### Termination Criteria
-- **High Confidence**: belief ≥ 0.7 in primary hypothesis
-- **Minimum Exploration**: At least 3 decision cycles completed
-- **Tool Exhaustion**: All relevant tools used with inconclusive results
-- **Maximum Iterations**: Hard limit at 5 steps to prevent infinite loops
+
+The agent uses a sophisticated multi-layer stopping mechanism:
+
+**1. Very High Confidence (≥ 0.8)**
+- Immediate termination when primary hypothesis reaches 80%+ confidence
+- Indicates overwhelming evidence for a specific issue
+
+**2. High Confidence (≥ 0.7) + Tool Completion**  
+- Stops when primary hypothesis reaches 70%+ confidence AND
+- All preferred tools for that hypothesis have been executed
+- Ensures thorough validation of high-confidence findings
+
+**3. Minimum Exploration Requirement**
+- Forces at least 3 decision cycles regardless of early confidence
+- Prevents premature conclusions from limited data
+
+**4. Maximum Iteration Limits**
+- Hard limit at 5 steps to prevent infinite loops
+- Ensures timely completion even with inconclusive evidence
+
+**5. Tool Exhaustion**
+- Stops when no more informative tools are available
+- Graceful termination when evidence gathering is complete
+
+**Example Decision Flow:**
+```
+Step 1: Confidence 0.5 → Continue (below threshold)
+Step 2: Confidence 0.7 → Check preferred tools, continue if incomplete  
+Step 3: Confidence 0.7 + all preferred tools used → Stop
+```
 
 ### Error Handling & Fallbacks
 - Tool timeouts with automatic retry (1 retry with exponential backoff)

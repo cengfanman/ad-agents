@@ -88,7 +88,9 @@ class AgentLoop:
             should_stop, stop_reason = self.policy.should_stop(memory.hypotheses, ctx)
             
             if should_stop and step >= 3:
-                self.display.show_decision(None, stop_reason)
+                # Prepare decision context for display
+                decision_context = self._prepare_decision_context(memory.hypotheses, ctx)
+                self.display.show_decision(None, stop_reason, decision_context)
                 memory.add_trace_entry('decision', {
                     'action': 'stop',
                     'reasoning': stop_reason,
@@ -101,7 +103,8 @@ class AgentLoop:
             
             if not selected_tool:
                 stop_reason = "No more informative tools available"
-                self.display.show_decision(None, stop_reason)
+                decision_context = self._prepare_decision_context(memory.hypotheses, ctx)
+                self.display.show_decision(None, stop_reason, decision_context)
                 memory.add_trace_entry('decision', {
                     'action': 'stop',
                     'reasoning': stop_reason,
@@ -111,7 +114,8 @@ class AgentLoop:
             
             # Show decision
             decision_reasoning = self._explain_tool_choice(selected_tool, memory.hypotheses)
-            self.display.show_decision(selected_tool, decision_reasoning)
+            decision_context = self._prepare_decision_context(memory.hypotheses, ctx)
+            self.display.show_decision(selected_tool, decision_reasoning, decision_context)
             
             memory.add_trace_entry('decision', {
                 'selected_tool': selected_tool,
@@ -355,6 +359,17 @@ class AgentLoop:
         }
         
         return explanations.get(tool_name, f'Selected {tool_name} for further investigation')
+    
+    def _prepare_decision_context(self, hypotheses: Dict[str, Any], ctx) -> Dict[str, Any]:
+        """Prepare context information for decision display."""
+        top_hypothesis = max(hypotheses.values(), key=lambda h: h.belief) if hypotheses else None
+        
+        return {
+            'tool_mapping': self.policy.get_tool_preferences(),
+            'used_tools': set(ctx.previous_results.keys()),
+            'top_hypothesis': top_hypothesis.name if top_hypothesis else None,
+            'hypothesis_beliefs': {name: hyp.belief for name, hyp in hypotheses.items()}
+        }
     
     def _summarize_context(self, ctx) -> Dict[str, Any]:
         """Create a summary of current context for trace."""

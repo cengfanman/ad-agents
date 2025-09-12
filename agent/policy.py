@@ -93,25 +93,24 @@ class PolicyEngine:
         if not top_hypothesis:
             return None
         
-        # Check if we already have enough confidence
+        # Check if we already have very high confidence AND have used key tools
+        if top_hypothesis.belief >= 0.8:
+            return None  # Stop - very high confidence
+        
+        # Even with high confidence, continue if we haven't used preferred tools for top hypothesis
+        used_tools = set(ctx.previous_results.keys())
         if top_hypothesis.belief >= 0.7:
-            return None  # Stop - high confidence
+            top_hyp_name = sorted_hypotheses[0][0]  # Get hypothesis name
+            preferred_tools = self.get_tool_preferences().get(top_hyp_name, [])
+            # Only stop if we've used all preferred tools for the top hypothesis
+            if all(tool in used_tools for tool in preferred_tools):
+                return None
         
         # Select tool based on information gain potential
-        used_tools = set(ctx.previous_results.keys())
-        
-        # Map hypotheses to preferred tools
-        tool_preferences = {
-            'h1_low_bids': ['ads_metrics'],
-            'h2_keyword_coverage': ['ads_metrics', 'listing_audit'],
-            'h3_competitor_pressure': ['competitor', 'ads_metrics'],
-            'h4_listing_quality': ['listing_audit', 'competitor'],
-            'h5_broad_match_waste': ['ads_metrics']
-        }
         
         # Find best tool based on top hypothesis
         for hyp_name, hyp in sorted_hypotheses[:2]:  # Consider top 2 hypotheses
-            preferred_tools = tool_preferences.get(hyp_name, [])
+            preferred_tools = self.get_tool_preferences().get(hyp_name, [])
             
             for tool_name in preferred_tools:
                 if tool_name not in used_tools:
@@ -125,6 +124,16 @@ class PolicyEngine:
             return next(iter(unused_tools))
         
         return None  # All tools used
+    
+    def get_tool_preferences(self) -> Dict[str, List[str]]:
+        """Get the mapping of hypotheses to preferred tools."""
+        return {
+            'h1_low_bids': ['ads_metrics'],
+            'h2_keyword_coverage': ['ads_metrics', 'listing_audit'],
+            'h3_competitor_pressure': ['competitor', 'ads_metrics'],
+            'h4_listing_quality': ['listing_audit', 'competitor'],
+            'h5_broad_match_waste': ['ads_metrics']
+        }
     
     def should_stop(self, hypotheses: Dict[str, Hypothesis], ctx: AgentContext) -> Tuple[bool, str]:
         """Determine if agent should stop execution."""

@@ -95,11 +95,21 @@ class ReasoningDisplay:
         
         self.console.print(panel)
     
-    def show_decision(self, tool_choice: str, reasoning: str) -> None:
-        """Display tool selection decision and reasoning."""
+    def show_decision(self, tool_choice: str, reasoning: str, decision_context: Dict[str, Any] = None) -> None:
+        """Display tool selection decision and reasoning with tool mapping."""
         
         title = "🎯 DECIDE: Tool Selection"
         
+        # Show tool mapping if context is provided
+        if decision_context and 'tool_mapping' in decision_context:
+            self.console.print(Panel(
+                self._create_tool_mapping_display(decision_context),
+                title="🗺️ Tool Mapping",
+                title_align="left",
+                border_style="cyan"
+            ))
+        
+        # Show decision
         if tool_choice:
             content = f"**Selected Tool:** `{tool_choice}`\n\n**Reasoning:** {reasoning}"
         else:
@@ -113,6 +123,53 @@ class ReasoningDisplay:
         )
         
         self.console.print(panel)
+    
+    def _create_tool_mapping_display(self, decision_context: Dict[str, Any]) -> Table:
+        """Create tool mapping table display."""
+        tool_mapping = decision_context['tool_mapping']
+        used_tools = decision_context.get('used_tools', set())
+        top_hypothesis = decision_context.get('top_hypothesis', '')
+        
+        # Create table for tool mapping
+        table = Table(show_header=True, header_style="bold cyan", show_lines=True)
+        table.add_column("Hypothesis", style="white", width=20)
+        table.add_column("Tools", style="dim white", width=30)
+        table.add_column("Status", style="white", width=10)
+        
+        # Sort by hypothesis belief if available
+        hypothesis_beliefs = decision_context.get('hypothesis_beliefs', {})
+        sorted_hypotheses = sorted(tool_mapping.items(), 
+                                 key=lambda x: hypothesis_beliefs.get(x[0], 0), 
+                                 reverse=True)
+        
+        for hyp_name, tools in sorted_hypotheses:
+            hyp_display = self._format_hypothesis_name(hyp_name)
+            
+            # Highlight if this is the top hypothesis
+            if hyp_name == top_hypothesis:
+                hyp_display = f"[bold yellow]{hyp_display}[/bold yellow] ⭐"
+            
+            # Format tools with status
+            tool_statuses = []
+            for tool in tools:
+                if tool in used_tools:
+                    tool_statuses.append(f"[dim green]{tool} ✓[/dim green]")
+                else:
+                    tool_statuses.append(f"[white]{tool}[/white]")
+            
+            tools_str = ", ".join(tool_statuses)
+            
+            # Show usage status
+            used_count = sum(1 for tool in tools if tool in used_tools)
+            status = f"{used_count}/{len(tools)}"
+            if used_count == len(tools):
+                status = f"[dim green]{status}[/dim green]"
+            elif used_count > 0:
+                status = f"[yellow]{status}[/yellow]"
+            
+            table.add_row(hyp_display, tools_str, status)
+        
+        return table
     
     def show_tool_result(self, result: ToolResult) -> None:
         """Display tool execution results."""
