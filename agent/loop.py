@@ -135,7 +135,8 @@ class AgentLoop:
             
             # Handle tool failure with fallback
             if not tool_result.ok:
-                fallback_suggestion = recommend_fallback(selected_tool)
+                used_tools = set(memory.previous_results.keys())
+                fallback_suggestion = recommend_fallback(selected_tool, used_tools)
                 self.display.console.print(f"[yellow]💡 Fallback suggestion: {fallback_suggestion}[/yellow]")
                 
                 memory.add_trace_entry('fallback', {

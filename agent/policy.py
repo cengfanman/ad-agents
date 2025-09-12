@@ -128,7 +128,7 @@ class PolicyEngine:
     def get_tool_preferences(self) -> Dict[str, List[str]]:
         """Get the mapping of hypotheses to preferred tools."""
         return {
-            'h1_low_bids': ['ads_metrics'],
+            'h1_low_bids': ['ads_metrics', 'inventory'],
             'h2_keyword_coverage': ['ads_metrics', 'listing_audit'],
             'h3_competitor_pressure': ['competitor', 'ads_metrics'],
             'h4_listing_quality': ['listing_audit', 'competitor'],
