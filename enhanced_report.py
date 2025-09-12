@@ -23,8 +23,9 @@ except ImportError:
 class EnhancedReportGenerator:
     """Generate enhanced human-friendly reports using OpenAI."""
     
-    def __init__(self):
+    def __init__(self, language='en'):
         self.openai_client = None
+        self.language = language
         if OPENAI_AVAILABLE:
             api_key = os.getenv('OPENAI_API_KEY')
             if api_key:
@@ -156,7 +157,31 @@ Focus on explaining:
     def _generate_analysis_with_ai(self, context: str) -> Optional[dict]:
         """Use OpenAI to generate human-friendly analysis."""
         
-        prompt = f"""You are analyzing the step-by-step execution of an AI agent that diagnoses Amazon advertising issues. Focus on explaining the agent's reasoning process and what it discovered at each step.
+        if self.language == 'zh-tw':
+            language_instruction = "請用繁體中文回覆。"
+            prompt = f"""你正在分析一個用於診斷Amazon廣告問題的AI代理的逐步執行過程。專注於解釋代理的推理過程以及在每一步中發現的內容。
+
+{context}
+
+請提供結構化的詳細分析如下：
+
+1. EXECUTION_OVERVIEW：代理的整體方法和方法論的簡要摘要
+2. STEP_BY_STEP_ANALYSIS：每一步發生的詳細解釋、代理為何做出每個決定以及學到了什麼
+3. REASONING_EVOLUTION：代理的理解如何在過程中演化 - 是什麼改變了它的想法以及為什麼
+4. DISCOVERY_INSIGHTS：執行期間的關鍵發現及其重要性
+5. PROCESS_EVALUATION：對代理決策過程的評估以及任何值得注意的方面
+
+重點關注：
+- 代理的思維過程和推理
+- 每個工具揭示了什麼以及為什麼重要
+- 如何評估和整合證據
+- 從觀察到結論的邏輯流程
+- 當計劃改變時的任何適應行為
+
+寫作時就像在向想要了解AI推理如何逐步工作的人解釋一樣。{language_instruction}
+"""
+        else:
+            prompt = f"""You are analyzing the step-by-step execution of an AI agent that diagnoses Amazon advertising issues. Focus on explaining the agent's reasoning process and what it discovered at each step.
 
 {context}
 
@@ -179,10 +204,12 @@ Write as if explaining to someone who wants to understand how AI reasoning works
 """
 
         try:
+            system_content = "You are a helpful Amazon advertising consultant who explains complex data in simple business terms." if self.language == 'en' else "你是一位有用的Amazon廣告顧問，能用簡單的商業術語解釋複雜數據。"
+            
             response = self.openai_client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
-                    {"role": "system", "content": "You are a helpful Amazon advertising consultant who explains complex data in simple business terms."},
+                    {"role": "system", "content": system_content},
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=800,
@@ -254,7 +281,69 @@ Write as if explaining to someone who wants to understand how AI reasoning works
         # Generate ASCII chart placeholder based on AI suggestion
         chart_placeholder = self._generate_ascii_chart(result, analysis.get('CHART_SUGGESTION', ''))
         
-        report = f"""# 🤖 AI Agent Execution Analysis
+        if self.language == 'zh-tw':
+            report = f"""# 🤖 AI 代理執行分析
+**ASIN:** {scenario_input.asin} | **目標:** {scenario_input.goal} | **生成時間:** {timestamp}
+
+---
+
+## 🎯 執行概述
+
+{analysis.get('EXECUTION_OVERVIEW', 'AI代理執行了系統性的廣告效能分析。')}
+
+**最終信心水準:** {result.get('confidence', 0):.0%} | **總步數:** {result.get('total_steps', '未知')}
+
+---
+
+## 🔍 逐步分析
+
+{analysis.get('STEP_BY_STEP_ANALYSIS', '詳細步驟分析不可用。')}
+
+---
+
+## 📈 代理推理演化
+
+{analysis.get('REASONING_EVOLUTION', '推理演化未記錄。')}
+
+---
+
+## 💡 關鍵發現
+
+{analysis.get('DISCOVERY_INSIGHTS', '關鍵發現未記錄。')}
+
+---
+
+## 🏁 最終假設排名
+
+{chart_placeholder}
+
+**代理結論:** {result.get('primary_hypothesis', '未知').replace('_', ' ').title()}
+
+### 最終建議行動:
+{chr(10).join([f"- {rec}" for rec in result.get('recommendations', [])[:3]])}
+
+---
+
+## 🔬 過程評估
+
+{analysis.get('PROCESS_EVALUATION', '過程評估不可用。')}
+
+---
+
+## 🔧 執行追蹤
+
+### 已執行的工具:
+{self._get_detailed_tools_trace(trace_data)}
+
+### 假設信心度演化:
+{chr(10).join([f"- **{name.replace('_', ' ').title()}:** {belief:.0%}" for name, belief in result.get('all_hypotheses', {}).items()])}
+
+---
+
+*🤖 此報告使用OpenAI GPT-4o逐步推理分析AI代理執行過程*
+"""
+        else:
+            report = f"""# 🤖 AI Agent Execution Analysis
 **ASIN:** {scenario_input.asin} | **Goal:** {scenario_input.goal} | **Generated:** {timestamp}
 
 ---
@@ -312,7 +401,7 @@ Write as if explaining to someone who wants to understand how AI reasoning works
 
 ---
 
-*🤖 This report analyzes AI agent execution with step-by-step reasoning powered by OpenAI GPT-3.5*
+*🤖 This report analyzes AI agent execution with step-by-step reasoning powered by OpenAI GPT-4o*
 """
         
         return report
@@ -406,7 +495,7 @@ Write as if explaining to someone who wants to understand how AI reasoning works
         return str(filepath)
 
 
-def generate_enhanced_report(result: dict, scenario_input, trace_data: dict = None) -> Optional[str]:
+def generate_enhanced_report(result: dict, scenario_input, trace_data: dict = None, language='en') -> Optional[str]:
     """Main function to generate enhanced report."""
-    generator = EnhancedReportGenerator()
+    generator = EnhancedReportGenerator(language=language)
     return generator.generate_enhanced_report(result, scenario_input, trace_data)

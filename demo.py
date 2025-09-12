@@ -100,6 +100,14 @@ Examples:
         help='Skip OpenAI enhanced report generation'
     )
     
+    parser.add_argument(
+        '--lang',
+        type=str,
+        choices=['en', 'zh-tw'],
+        default='en',
+        help='Report language (en=English, zh-tw=Traditional Chinese)'
+    )
+    
     args = parser.parse_args()
     
     # Load scenario and determine data directory
@@ -121,6 +129,7 @@ Examples:
 **Lookback Days:** {scenario_input.lookback_days}
 **Data Source:** {mock_dir}
 **Ads Mode:** {args.mode}
+**Language:** {'Traditional Chinese' if args.lang == 'zh-tw' else 'English'}
 **Test Flags:** {', '.join([f for f in ['Competitor failure enabled' if args.break_competitor else None, 'Skip OpenAI reports' if args.no_openai else None] if f]) or 'None'}
 """,
         title="Agent Initialization",
@@ -194,7 +203,7 @@ Examples:
         if not args.no_openai:
             try:
                 from enhanced_report import generate_enhanced_report
-                enhanced_report_path = generate_enhanced_report(result, scenario_input, trace_data)
+                enhanced_report_path = generate_enhanced_report(result, scenario_input, trace_data, language=args.lang)
                 if enhanced_report_path:
                     console.print(f"\n[bold green]📋 Enhanced Report Generated:[/bold green] {enhanced_report_path}")
                 else:
