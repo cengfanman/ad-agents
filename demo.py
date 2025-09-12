@@ -17,6 +17,13 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.json import JSON
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv(override=True)  # Override existing environment variables
+except ImportError:
+    pass  # dotenv not available, continue with system env vars
+
 from agent.loop import AgentLoop
 from agent.types import ScenarioInput
 
@@ -176,6 +183,17 @@ Examples:
         
         markdown_summary = generate_markdown_summary(result, scenario_input, trace_data)
         console.print(Panel(markdown_summary, border_style="dim"))
+        
+        # Generate enhanced report if OpenAI is available
+        try:
+            from enhanced_report import generate_enhanced_report
+            enhanced_report_path = generate_enhanced_report(result, scenario_input, trace_data)
+            if enhanced_report_path:
+                console.print(f"\n[bold green]📋 Enhanced Report Generated:[/bold green] {enhanced_report_path}")
+            else:
+                console.print("[dim yellow]💡 Set OPENAI_API_KEY environment variable to generate enhanced reports[/dim yellow]")
+        except Exception as e:
+            console.print(f"[dim]Enhanced report generation skipped: {str(e)}[/dim]")
         
         sys.exit(0)
         
