@@ -158,53 +158,99 @@ Focus on explaining:
         """Use OpenAI to generate human-friendly analysis."""
         
         if self.language == 'zh-tw':
-            language_instruction = "請用繁體中文回覆。"
-            prompt = f"""你正在分析一個用於診斷Amazon廣告問題的AI代理的逐步執行過程。專注於解釋代理的推理過程以及在每一步中發現的內容。
+            language_instruction = "請用繁體中文回覆，並提供豐富詳細的解釋。"
+            prompt = f"""你正在分析一個用於診斷Amazon廣告問題的AI代理的逐步執行過程。作為一位專業的AI教學專家，請詳細解釋代理的推理過程，讓讀者能深入理解AI如何思考和學習。
 
 {context}
 
-請提供結構化的詳細分析如下：
+請提供非常詳細的分析，結構化如下：
 
-1. EXECUTION_OVERVIEW：代理的整體方法和方法論的簡要摘要
-2. STEP_BY_STEP_ANALYSIS：每一步發生的詳細解釋、代理為何做出每個決定以及學到了什麼
-3. REASONING_EVOLUTION：代理的理解如何在過程中演化 - 是什麼改變了它的想法以及為什麼
-4. DISCOVERY_INSIGHTS：執行期間的關鍵發現及其重要性
-5. PROCESS_EVALUATION：對代理決策過程的評估以及任何值得注意的方面
+1. EXECUTION_OVERVIEW：
+   - 詳細描述代理的整體策略和方法論
+   - 解釋為什麼選擇這種方法來解決問題
+   - 說明代理如何設定初始假設和目標
 
-重點關注：
-- 代理的思維過程和推理
-- 每個工具揭示了什麼以及為什麼重要
-- 如何評估和整合證據
-- 從觀察到結論的邏輯流程
-- 當計劃改變時的任何適應行為
+2. STEP_BY_STEP_ANALYSIS：
+   - 對每一步驟進行深入分析，包括：
+     * 代理在這一步的具體思考過程
+     * 為什麼選擇使用特定工具
+     * 工具返回的數據意味著什麼
+     * 這些發現如何影響代理的下一步決策
+     * 任何意外的結果以及代理如何應對
 
-寫作時就像在向想要了解AI推理如何逐步工作的人解釋一樣。{language_instruction}
+3. REASONING_EVOLUTION：
+   - 詳細追蹤代理信念的變化軌跡
+   - 解釋每次信念更新的邏輯依據
+   - 分析代理如何整合新證據和舊知識
+   - 描述代理學習和適應的過程
+
+4. DISCOVERY_INSIGHTS：
+   - 深入解釋每個關鍵發現的商業含義
+   - 分析這些發現對Amazon廣告策略的影響
+   - 說明代理如何從數據中提取洞察
+   - 討論發現之間的相互關聯
+
+5. PROCESS_EVALUATION：
+   - 評估代理的決策品質和邏輯性
+   - 分析代理處理不確定性和錯誤的能力
+   - 討論代理推理過程的優點和局限性
+   - 提供對AI推理機制的深度見解
+
+6. EDUCATIONAL_INSIGHTS：
+   - 從這個案例中可以學到哪些AI推理原理
+   - 解釋代理行為背後的機器學習概念
+   - 討論這種AI方法在其他場景的應用潛力
+
+請用教學的語調寫作，包含豐富的解釋和例子，幫助讀者理解AI推理的複雜性和精妙之處。{language_instruction}
 """
         else:
-            prompt = f"""You are analyzing the step-by-step execution of an AI agent that diagnoses Amazon advertising issues. Focus on explaining the agent's reasoning process and what it discovered at each step.
+            prompt = f"""You are analyzing the step-by-step execution of an AI agent that diagnoses Amazon advertising issues. As a professional AI education expert, provide detailed explanations that help readers deeply understand how AI thinks and learns.
 
 {context}
 
-Please provide a detailed analysis structured as follows:
+Please provide a comprehensive and detailed analysis structured as follows:
 
-1. EXECUTION_OVERVIEW: Brief summary of the agent's overall approach and methodology
-2. STEP_BY_STEP_ANALYSIS: Detailed explanation of what happened at each step, why the agent made each decision, and what it learned
-3. REASONING_EVOLUTION: How the agent's understanding evolved through the process - what changed its mind and why
-4. DISCOVERY_INSIGHTS: Key discoveries made during execution and their significance 
-5. PROCESS_EVALUATION: Assessment of the agent's decision-making process and any noteworthy aspects
+1. EXECUTION_OVERVIEW:
+   - Detailed description of the agent's overall strategy and methodology
+   - Explain why this approach was chosen to solve the problem
+   - Describe how the agent set initial hypotheses and goals
 
-Focus on:
-- The agent's thought process and reasoning
-- What each tool revealed and why it was significant
-- How evidence was evaluated and integrated
-- The logical flow from observation to conclusion
-- Any adaptive behavior when plans changed
+2. STEP_BY_STEP_ANALYSIS:
+   - Deep analysis of each step, including:
+     * The agent's specific thought process at this step
+     * Why it chose to use a particular tool
+     * What the tool's returned data means
+     * How these findings influenced the agent's next decision
+     * Any unexpected results and how the agent adapted
 
-Write as if explaining to someone who wants to understand how AI reasoning works step-by-step.
+3. REASONING_EVOLUTION:
+   - Detailed tracking of the agent's belief change trajectory
+   - Explain the logical basis for each belief update
+   - Analyze how the agent integrates new evidence with old knowledge
+   - Describe the agent's learning and adaptation process
+
+4. DISCOVERY_INSIGHTS:
+   - In-depth explanation of the business implications of each key finding
+   - Analyze how these discoveries impact Amazon advertising strategy
+   - Explain how the agent extracts insights from data
+   - Discuss the interconnections between findings
+
+5. PROCESS_EVALUATION:
+   - Evaluate the quality and logic of the agent's decisions
+   - Analyze the agent's ability to handle uncertainty and errors
+   - Discuss strengths and limitations of the agent's reasoning process
+   - Provide deep insights into AI reasoning mechanisms
+
+6. EDUCATIONAL_INSIGHTS:
+   - What AI reasoning principles can be learned from this case
+   - Explain the machine learning concepts behind agent behavior
+   - Discuss the potential application of this AI approach in other scenarios
+
+Write in an educational tone with rich explanations and examples to help readers understand the complexity and sophistication of AI reasoning.
 """
 
         try:
-            system_content = "You are a helpful Amazon advertising consultant who explains complex data in simple business terms." if self.language == 'en' else "你是一位有用的Amazon廣告顧問，能用簡單的商業術語解釋複雜數據。"
+            system_content = "You are an expert AI educator and Amazon advertising consultant who provides detailed, educational explanations about AI reasoning and business insights." if self.language == 'en' else "你是一位專業的AI教育專家和Amazon廣告顧問，提供關於AI推理和商業洞察的詳細教學解釋。"
             
             response = self.openai_client.chat.completions.create(
                 model="gpt-4o",
@@ -212,7 +258,7 @@ Write as if explaining to someone who wants to understand how AI reasoning works
                     {"role": "system", "content": system_content},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=800,
+                max_tokens=1500,
                 temperature=0.7
             )
             
@@ -231,11 +277,12 @@ Write as if explaining to someone who wants to understand how AI reasoning works
             'STEP_BY_STEP_ANALYSIS': '• Agent executed systematic analysis of advertising performance',
             'REASONING_EVOLUTION': 'Agent updated beliefs based on evidence collected during execution',
             'DISCOVERY_INSIGHTS': 'Key insights were discovered through iterative tool execution',
-            'PROCESS_EVALUATION': 'Agent demonstrated effective reasoning and evidence integration'
+            'PROCESS_EVALUATION': 'Agent demonstrated effective reasoning and evidence integration',
+            'EDUCATIONAL_INSIGHTS': 'This case demonstrates key principles of AI reasoning and decision-making'
         }
         
         # Try to parse structured content if available
-        keywords = ['EXECUTION_OVERVIEW', 'STEP_BY_STEP_ANALYSIS', 'REASONING_EVOLUTION', 'DISCOVERY_INSIGHTS', 'PROCESS_EVALUATION']
+        keywords = ['EXECUTION_OVERVIEW', 'STEP_BY_STEP_ANALYSIS', 'REASONING_EVOLUTION', 'DISCOVERY_INSIGHTS', 'PROCESS_EVALUATION', 'EDUCATIONAL_INSIGHTS']
         current_section = None
         current_content = []
         
@@ -330,6 +377,12 @@ Write as if explaining to someone who wants to understand how AI reasoning works
 
 ---
 
+## 🎓 教學洞察
+
+{analysis.get('EDUCATIONAL_INSIGHTS', 'AI推理教學洞察不可用。')}
+
+---
+
 ## 🔧 執行追蹤
 
 ### 已執行的工具:
@@ -388,6 +441,12 @@ Write as if explaining to someone who wants to understand how AI reasoning works
 ## 🔬 Process Evaluation
 
 {analysis.get('PROCESS_EVALUATION', 'Process evaluation not available.')}
+
+---
+
+## 🎓 Educational Insights
+
+{analysis.get('EDUCATIONAL_INSIGHTS', 'AI reasoning educational insights not available.')}
 
 ---
 
