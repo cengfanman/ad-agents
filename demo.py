@@ -94,6 +94,12 @@ Examples:
         help='Simulate competitor tool failure for testing fallback'
     )
     
+    parser.add_argument(
+        '--no-openai',
+        action='store_true',
+        help='Skip OpenAI enhanced report generation'
+    )
+    
     args = parser.parse_args()
     
     # Load scenario and determine data directory
@@ -115,7 +121,7 @@ Examples:
 **Lookback Days:** {scenario_input.lookback_days}
 **Data Source:** {mock_dir}
 **Ads Mode:** {args.mode}
-**Test Flags:** {'Competitor failure enabled' if args.break_competitor else 'None'}
+**Test Flags:** {', '.join([f for f in ['Competitor failure enabled' if args.break_competitor else None, 'Skip OpenAI reports' if args.no_openai else None] if f]) or 'None'}
 """,
         title="Agent Initialization",
         title_align="left",
@@ -184,16 +190,19 @@ Examples:
         markdown_summary = generate_markdown_summary(result, scenario_input, trace_data)
         console.print(Panel(markdown_summary, border_style="dim"))
         
-        # Generate enhanced report if OpenAI is available
-        try:
-            from enhanced_report import generate_enhanced_report
-            enhanced_report_path = generate_enhanced_report(result, scenario_input, trace_data)
-            if enhanced_report_path:
-                console.print(f"\n[bold green]📋 Enhanced Report Generated:[/bold green] {enhanced_report_path}")
-            else:
-                console.print("[dim yellow]💡 Set OPENAI_API_KEY environment variable to generate enhanced reports[/dim yellow]")
-        except Exception as e:
-            console.print(f"[dim]Enhanced report generation skipped: {str(e)}[/dim]")
+        # Generate enhanced report if OpenAI is available and not skipped
+        if not args.no_openai:
+            try:
+                from enhanced_report import generate_enhanced_report
+                enhanced_report_path = generate_enhanced_report(result, scenario_input, trace_data)
+                if enhanced_report_path:
+                    console.print(f"\n[bold green]📋 Enhanced Report Generated:[/bold green] {enhanced_report_path}")
+                else:
+                    console.print("[dim yellow]💡 Set OPENAI_API_KEY environment variable to generate enhanced reports[/dim yellow]")
+            except Exception as e:
+                console.print(f"[dim]Enhanced report generation skipped: {str(e)}[/dim]")
+        else:
+            console.print("[dim]OpenAI enhanced report generation skipped (--no-openai flag)[/dim]")
         
         sys.exit(0)
         
