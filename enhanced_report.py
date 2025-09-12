@@ -180,7 +180,7 @@ Write as if explaining to someone who wants to understand how AI reasoning works
 
         try:
             response = self.openai_client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4o",
                 messages=[
                     {"role": "system", "content": "You are a helpful Amazon advertising consultant who explains complex data in simple business terms."},
                     {"role": "user", "content": prompt}
