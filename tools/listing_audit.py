@@ -24,7 +24,13 @@ class ListingAuditTool(BaseTool):
         
         Expected context:
         - scenario_dir: Path to scenario data directory
+        - flags: Dict that may contain 'break_audit' for testing
         """
+        # Check for test mode break
+        flags = ctx.get('flags', {})
+        if flags.get('break_audit', False):
+            raise DataMissingError("Simulated audit data unavailable (test mode)")
+        
         scenario_dir = Path(ctx['scenario_dir'])
         file_path = scenario_dir / 'listing_audit.json'
         

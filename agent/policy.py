@@ -105,7 +105,14 @@ class PolicyEngine:
             return None  # Stop - very high confidence after minimum steps
         
         if top_hypothesis.belief >= 0.7 and ctx.step >= 3:
-            return None  # Stop - high confidence after minimum steps
+            # For ≥0.7 confidence, also check if preferred tools are completed
+            used_tools = set(ctx.previous_results.keys())
+            preferred_tools = self.get_tool_preferences().get(top_hypothesis.name, [])
+            tools_completed = all(tool in used_tools for tool in preferred_tools)
+            
+            if tools_completed:
+                return None  # Stop - high confidence + tools completed + minimum steps
+            # Otherwise continue even with high confidence if tools not completed
         
         # Select tool based on information gain potential
         
@@ -144,9 +151,15 @@ class PolicyEngine:
         if top_hypothesis.belief >= 0.8 and ctx.step >= 3:
             return True, f"Very high confidence in {top_hypothesis.name} (belief={top_hypothesis.belief:.2f})"
         
-        # High confidence threshold (≥ 0.7) but require minimum 3 steps (assignment requirement)
+        # High confidence threshold (≥ 0.7) but require minimum 3 steps AND tool completion (assignment requirement)
         if top_hypothesis.belief >= 0.7 and ctx.step >= 3:
-            return True, f"High confidence in {top_hypothesis.name} (belief={top_hypothesis.belief:.2f})"
+            used_tools = set(ctx.previous_results.keys())
+            preferred_tools = self.get_tool_preferences().get(top_hypothesis.name, [])
+            tools_completed = all(tool in used_tools for tool in preferred_tools)
+            
+            if tools_completed:
+                return True, f"High confidence in {top_hypothesis.name} (belief={top_hypothesis.belief:.2f}) with all preferred tools completed"
+            # Otherwise continue even with high confidence if tools not completed
         
         # Minimum iterations
         if ctx.step >= 3:

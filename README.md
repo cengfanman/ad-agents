@@ -146,8 +146,11 @@ The agent demonstrates true autonomy by:
 **Enhanced Decision Display:**
 - **Tool Mapping Table**: Shows hypothesis → tools mapping with real-time status
 - **Usage Tracking**: Visual indicators (✓) for completed tools  
-- **Top Hypothesis Highlighting**: ⭐ marks the highest-confidence hypothesis
+- **Hypothesis Status Identifiers**:
+  - 🔍 marks the currently investigated hypothesis
+  - ⭐ marks the highest-confidence hypothesis
 - **Status Ratios**: Shows tool completion ratios (e.g., 1/2, 2/2) for each hypothesis
+- **Detailed Reasoning**: Explains hypothesis selection logic and tool choice rationale
 
 ### Belief System & Information Gain
 - Maintains confidence scores (0.0-1.0) for 5 core hypotheses about ad performance issues
@@ -177,18 +180,19 @@ The agent uses a hypothesis-to-tool mapping system for optimal information gain:
 
 The agent uses a sophisticated multi-layer stopping mechanism:
 
-**1. Very High Confidence (≥ 0.8)**
-- Immediate termination when primary hypothesis reaches 80%+ confidence
+**1. Minimum Exploration Requirement (Hard Requirement)**
+- Forces at least 3 decision cycles regardless of confidence level (assignment requirement)
+- Prevents premature conclusions from limited data
+- Ensures sufficient evidence collection and analysis
+
+**2. Very High Confidence (≥ 0.8) + Minimum Steps**
+- Terminates when primary hypothesis reaches 80%+ confidence AND at least 3 steps completed
 - Indicates overwhelming evidence for a specific issue
 
-**2. High Confidence (≥ 0.7) + Tool Completion**  
+**3. High Confidence (≥ 0.7) + Tool Completion + Minimum Steps**  
 - Stops when primary hypothesis reaches 70%+ confidence AND
-- All preferred tools for that hypothesis have been executed
-- Ensures thorough validation of high-confidence findings
-
-**3. Minimum Exploration Requirement**
-- Forces at least 3 decision cycles regardless of early confidence
-- Prevents premature conclusions from limited data
+- All preferred tools for that hypothesis have been executed AND
+- At least 3 decision cycles have been completed
 
 **4. Maximum Iteration Limits**
 - Hard limit at 5 steps to prevent infinite loops
@@ -200,11 +204,11 @@ The agent uses a sophisticated multi-layer stopping mechanism:
 
 **Example Decision Flow:**
 ```
-Step 1: Confidence 0.5 → Continue (below threshold)
-Step 2: Confidence 0.7 → Continue (minimum 3 steps required)  
-Step 3: Confidence 0.7+ → Stop (minimum requirement met)
+Step 1: Confidence 0.8 → Continue (minimum 3 steps required)
+Step 2: Confidence 0.8 → Continue (minimum 3 steps required)  
+Step 3: Confidence 0.8+ → Stop (minimum requirement met + high confidence)
 
-Assignment Requirement: Minimum 3 decision iterations regardless of confidence
+Assignment Hard Requirement: Must complete at least 3 decision iterations regardless of confidence
 ```
 
 ### Error Handling & Fallbacks

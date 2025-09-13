@@ -95,6 +95,24 @@ Examples:
     )
     
     parser.add_argument(
+        '--break-audit',
+        action='store_true',
+        help='Simulate listing audit tool failure for testing fallback'
+    )
+    
+    parser.add_argument(
+        '--break-inventory',
+        action='store_true',
+        help='Simulate inventory tool failure for testing fallback'
+    )
+    
+    parser.add_argument(
+        '--break-ads',
+        action='store_true',
+        help='Simulate ads metrics tool failure for testing fallback'
+    )
+    
+    parser.add_argument(
         '--no-openai',
         action='store_true',
         help='Skip OpenAI enhanced report generation'
@@ -116,7 +134,10 @@ Examples:
     # Prepare flags for agent
     flags = {
         'ads_mode': args.mode,
-        'break_competitor': args.break_competitor
+        'break_competitor': args.break_competitor,
+        'break_audit': args.break_audit,
+        'break_inventory': args.break_inventory,
+        'break_ads': args.break_ads
     }
     
     # Show startup information
@@ -130,7 +151,13 @@ Examples:
 **Data Source:** {mock_dir}
 **Ads Mode:** {args.mode}
 **Language:** {'Traditional Chinese' if args.lang == 'zh-tw' else 'English'}
-**Test Flags:** {', '.join([f for f in ['Competitor failure enabled' if args.break_competitor else None, 'Skip OpenAI reports' if args.no_openai else None] if f]) or 'None'}
+**Test Flags:** {', '.join([f for f in [
+    'Competitor failure enabled' if args.break_competitor else None,
+    'Audit failure enabled' if args.break_audit else None, 
+    'Inventory failure enabled' if args.break_inventory else None,
+    'Ads metrics failure enabled' if args.break_ads else None,
+    'Skip OpenAI reports' if args.no_openai else None
+] if f]) or 'None'}
 """,
         title="Agent Initialization",
         title_align="left",
