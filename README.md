@@ -11,6 +11,24 @@ This project demonstrates Agent architecture (not workflow) by implementing an a
 - Adapts strategy based on evidence gathered
 - Provides actionable recommendations
 
+## Core Design Philosophy
+
+### Hypothesis-Driven Reasoning Architecture
+
+**This Agent adopts a hypothesis-driven reasoning architecture:**
+
+1. **Multi-Hypothesis Parallel Tracking** - Agent simultaneously maintains multiple possible problem hypotheses
+2. **Dynamic Tool Selection** - Selects the most appropriate diagnostic tools based on current belief state
+3. **Evidence Accumulation Updates** - Updates confidence levels for each hypothesis after each tool execution
+4. **Adaptive Decision Making** - Adjusts next strategy based on new evidence
+
+### Technical Architecture Highlights
+
+- **Modular Tool System**: ads_metrics, listing_audit, competitor, inventory, etc.
+- **Bayesian Belief Updates**: Quantifies uncertainty for scientific decision-making
+- **Complete Execution Tracking**: Detailed records of every decision process
+- **AI-Enhanced Report Generation**: Uses OpenAI GPT-4o to generate in-depth analysis reports with Chinese and English support
+
 ## Quick Start
 
 1. **Setup Environment**
@@ -105,6 +123,42 @@ The agent automatically extracts evidence from tool results:
 - **Medium Evidence** (+0.1): Moderate indicators (e.g., CTR < 0.015 for quality issues)  
 - **Weak Evidence** (+0.05): Minor indicators (e.g., low inventory affecting bids)
 - **Counter Evidence** (-0.1): Evidence against hypothesis
+
+## Tool System Overview
+
+The agent is equipped with 4 specialized diagnostic tools, each designed for specific analysis functions:
+
+### 1. Ads Metrics Tool - Advertisement Data Analysis
+- **Function**: Analyzes keyword and campaign performance data
+- **Output**: CTR, CVR, ACOS, impression metrics, and conversion issues
+- **Intelligent Analysis**: Automatically identifies inefficient keywords and high-cost problems
+- **Use Cases**: Foundation diagnosis for all advertising problems
+
+### 2. Competitor Tool - Market Competition Analysis
+- **Function**: Evaluates market competition pressure and positioning
+- **Output**: Price competitiveness, advertising competition intensity, quality benchmarks
+- **Intelligent Analysis**: Quantifies competitive pressure, identifies threats and opportunities
+- **Use Cases**: Traffic issues, pricing strategy problems
+
+### 3. Listing Audit Tool - Product Page Quality Review
+- **Function**: Comprehensive evaluation of product listing quality
+- **Output**: Title optimization, image quality, A+ content, rating analysis
+- **Intelligent Analysis**: Calculates conversion impact potential, provides optimization recommendations
+- **Use Cases**: Low conversion rates, product competitiveness issues
+
+### 4. Inventory Tool - Stock Status Monitoring
+- **Function**: Monitors inventory levels and restocking status
+- **Output**: Days of inventory, stockout risk, restocking timeline
+- **Intelligent Analysis**: Assesses impact on advertising strategy
+- **Use Cases**: Abnormal advertising performance, inventory constraint issues
+
+### Tool Collaboration Mechanism
+
+The agent doesn't simply call tools, but engages in intelligent collaboration:
+- **Dynamic Selection**: Chooses most relevant tools based on current hypotheses
+- **Result Integration**: Synthesizes results from multiple tools for comprehensive analysis
+- **Hypothesis Updates**: Adjusts problem hypotheses based on tool results
+- **Strategy Adaptation**: Modifies next actions based on new evidence
 
 ## Evaluation Criteria Mapping
 
@@ -226,7 +280,7 @@ The agent includes comprehensive error handling:
 python demo.py --scenario scenarios/scenario_low_impr.json
 
 # Simulated failure - competitor tool fails, agent adapts
-python demo.py --scenario scenarios/scenario_low_impr.json --break-competitor
+python demo.py --scenario scenarios/scenario_low_impr.json --break-inventory
 ```
 
 **Expected Fallback Behavior:**
