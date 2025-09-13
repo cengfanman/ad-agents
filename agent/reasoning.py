@@ -95,13 +95,17 @@ class ReasoningDisplay:
         
         self.console.print(panel)
     
-    def show_decision(self, tool_choice: str, reasoning: str, decision_context: Dict[str, Any] = None) -> None:
+    def show_decision(self, tool_choice: str, reasoning: str, decision_context: Dict[str, Any] = None, current_hypothesis: str = None) -> None:
         """Display tool selection decision and reasoning with tool mapping."""
         
         title = "🎯 DECIDE: Tool Selection"
         
         # Show tool mapping if context is provided
         if decision_context and 'tool_mapping' in decision_context:
+            # Add current hypothesis to decision context for display
+            if current_hypothesis:
+                decision_context['current_hypothesis'] = current_hypothesis
+            
             self.console.print(Panel(
                 self._create_tool_mapping_display(decision_context),
                 title="🗺️ Tool Mapping",
@@ -129,6 +133,7 @@ class ReasoningDisplay:
         tool_mapping = decision_context['tool_mapping']
         used_tools = decision_context.get('used_tools', set())
         top_hypothesis = decision_context.get('top_hypothesis', '')
+        current_hypothesis = decision_context.get('current_hypothesis', '')
         
         # Create table for tool mapping
         table = Table(show_header=True, header_style="bold cyan", show_lines=True)
@@ -145,9 +150,21 @@ class ReasoningDisplay:
         for hyp_name, tools in sorted_hypotheses:
             hyp_display = self._format_hypothesis_name(hyp_name)
             
-            # Highlight if this is the top hypothesis
+            # Add special identifiers
+            markers = []
+            
+            # Mark the currently investigated hypothesis
+            if hyp_name == current_hypothesis:
+                markers.append("🔍")
+            
+            # Mark the top hypothesis (highest confidence)
             if hyp_name == top_hypothesis:
-                hyp_display = f"[bold yellow]{hyp_display}[/bold yellow] ⭐"
+                markers.append("⭐")
+            
+            # Apply markers
+            if markers:
+                marker_str = " ".join(markers)
+                hyp_display = f"[bold yellow]{hyp_display}[/bold yellow] {marker_str}"
             
             # Format tools with status
             tool_statuses = []
