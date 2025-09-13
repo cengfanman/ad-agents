@@ -280,7 +280,7 @@ amazon-agent/
 python demo.py --scenario scenarios/scenario_low_impr.json
 
 # 模擬失效 - 競爭對手工具失效，代理適應
-python demo.py --scenario scenarios/scenario_low_impr.json --break-competitor
+python demo.py --scenario scenarios/scenario_low_impr.json --break-inventory
 ```
 
 **預期回退行為：**
@@ -292,37 +292,9 @@ python demo.py --scenario scenarios/scenario_low_impr.json --break-competitor
 ## 測試與驗證
 
 ```bash
-# 運行全面煙霧測試
-./scripts/smoke.sh
-
 # 測試個別場景
 python demo.py --scenario scenarios/scenario_low_impr.json          # → 應專注於競價/競爭
 python demo.py --scenario scenarios/scenario_high_acos.json         # → 應專注於浪費減少
 python demo.py --scenario scenarios/scenario_high_click_low_conv.json # → 應專注於清單品質
+python demo.py --scenario scenarios/scenario_low_impr.json --break-inventory # 测试inventory 工具失效
 ```
-
-## 影片演示腳本（5-8 分鐘）
-
-### 第 1 段：設計理念（1-2 分鐘）
-- 「這是 AI 代理，不是工作流程 - 它做自主決策」
-- 「展示帶有動態工具選擇的觀察-思考-行動循環」
-- 「基於證據的信念系統更新，而非固定規則」
-
-### 第 2 段：不同路徑演示（3-4 分鐘）
-- **命令 1**：`python demo.py --scenario scenarios/scenario_low_impr.json`
-  - 顯示代理優先使用 ads_metrics → competitor（競價/競爭焦點）
-  - 指出信念更新和推理
-- **命令 2**：`python demo.py --scenario scenarios/scenario_high_acos.json`
-  - 顯示不同工具選擇（ads_metrics 優先進行浪費分析）
-  - 突出不同的最終建議
-
-### 第 3 段：錯誤處理（1-2 分鐘）
-- **命令 3**：`python demo.py --scenario scenarios/scenario_low_impr.json --break-competitor`
-- 顯示優雅降級和回退建議
-- 展示代理使用替代策略繼續
-
-### 要強調的重點
-- **決策日誌**：指出顯示工具選擇推理的「DECIDE」部分
-- **信念更新**：突出證據如何改變假設信心
-- **最終排名**：顯示不同場景如何導致不同假設排名
-- **可行輸出**：準備實施的 JSON + Markdown 建議

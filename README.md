@@ -56,12 +56,7 @@ This project demonstrates Agent architecture (not workflow) by implementing an a
 3. **Test Error Handling**
    ```bash
    # Simulate competitor tool failure to see fallback behavior
-   python demo.py --scenario scenarios/scenario_low_impr.json --break-competitor
-   ```
-
-4. **Run All Scenarios (Smoke Test)**
-   ```bash
-   ./scripts/smoke.sh
+   python demo.py --scenario scenarios/scenario_low_impr.json --break-inventory
    ```
 
 ## Expected Outputs
@@ -279,7 +274,7 @@ The agent includes comprehensive error handling:
 # Normal execution - should complete successfully
 python demo.py --scenario scenarios/scenario_low_impr.json
 
-# Simulated failure - competitor tool fails, agent adapts
+# Simulated failure - inventory tool fails, agent adapts
 python demo.py --scenario scenarios/scenario_low_impr.json --break-inventory
 ```
 
@@ -292,37 +287,12 @@ python demo.py --scenario scenarios/scenario_low_impr.json --break-inventory
 ## Testing & Validation
 
 ```bash
-# Run comprehensive smoke test
-./scripts/smoke.sh
 
 # Test individual scenarios
 python demo.py --scenario scenarios/scenario_low_impr.json          # → Should focus on bids/competition
 python demo.py --scenario scenarios/scenario_high_acos.json         # → Should focus on waste reduction  
 python demo.py --scenario scenarios/scenario_high_click_low_conv.json # → Should focus on listing quality
+python demo.py --scenario scenarios/scenario_low_impr.json --break-inventory # Simulated failure - inventory tool fails, agent adapts
 ```
 
-## Video Demo Script (5-8 minutes)
-
-### Segment 1: Design Rationale (1-2 min)
-- "This is an AI Agent, not a workflow - it makes autonomous decisions"
-- "Show observe-think-act loop with dynamic tool selection"
-- "Belief system updates based on evidence, not fixed rules"
-
-### Segment 2: Different Paths Demo (3-4 min)  
-- **Command 1**: `python demo.py --scenario scenarios/scenario_low_impr.json`
-  - Show agent prioritizing ads_metrics → competitor (bid/competition focus)
-  - Point out belief updates and reasoning
-- **Command 2**: `python demo.py --scenario scenarios/scenario_high_acos.json`  
-  - Show different tool selection (ads_metrics first for waste analysis)
-  - Highlight different final recommendations
-
-### Segment 3: Error Handling (1-2 min)
-- **Command 3**: `python demo.py --scenario scenarios/scenario_low_impr.json --break-competitor`
-- Show graceful degradation and fallback suggestions
-- Demonstrate agent continues with alternative strategy
-
-### Key Points to Emphasize
-- **Decision logs**: Point out "DECIDE" sections showing tool selection reasoning
-- **Belief updates**: Highlight how evidence changes hypothesis confidence  
-- **Final rankings**: Show how different scenarios lead to different hypothesis rankings
-- **Actionable output**: JSON + Markdown recommendations ready for implementation# ad-agents
+# ad-agents
