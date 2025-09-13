@@ -87,8 +87,14 @@ class AgentLoop:
             # DECIDE: Select next action
             should_stop, stop_reason = self.policy.should_stop(memory.hypotheses, ctx)
             
-            if should_stop and step >= 3:
-                self.display.show_decision(None, stop_reason)
+            # Allow immediate stop for very high confidence (≥ 0.8), otherwise require minimum 3 steps
+            top_hypothesis = max(memory.hypotheses.values(), key=lambda h: h.belief) if memory.hypotheses else None
+            immediate_stop = top_hypothesis and top_hypothesis.belief >= 0.8
+            
+            if should_stop and (immediate_stop or step >= 3):
+                # Prepare decision context for display
+                decision_context = self._prepare_decision_context(memory.hypotheses, ctx)
+                self.display.show_decision(None, stop_reason, decision_context)
                 memory.add_trace_entry('decision', {
                     'action': 'stop',
                     'reasoning': stop_reason,
@@ -97,11 +103,12 @@ class AgentLoop:
                 break
             
             # Select tool
-            selected_tool = self.policy.select_next_tool(memory.hypotheses, ctx)
+            tool_selection = self.policy.select_next_tool(memory.hypotheses, ctx)
             
-            if not selected_tool:
+            if not tool_selection:
                 stop_reason = "No more informative tools available"
-                self.display.show_decision(None, stop_reason)
+                decision_context = self._prepare_decision_context(memory.hypotheses, ctx)
+                self.display.show_decision(None, stop_reason, decision_context)
                 memory.add_trace_entry('decision', {
                     'action': 'stop',
                     'reasoning': stop_reason,
@@ -109,9 +116,12 @@ class AgentLoop:
                 })
                 break
             
+            selected_tool, selected_hypothesis = tool_selection
+            
             # Show decision
-            decision_reasoning = self._explain_tool_choice(selected_tool, memory.hypotheses)
-            self.display.show_decision(selected_tool, decision_reasoning)
+            decision_reasoning = self._explain_tool_choice(selected_tool, selected_hypothesis, memory.hypotheses, ctx)
+            decision_context = self._prepare_decision_context(memory.hypotheses, ctx)
+            self.display.show_decision(selected_tool, decision_reasoning, decision_context, selected_hypothesis)
             
             memory.add_trace_entry('decision', {
                 'selected_tool': selected_tool,
@@ -131,7 +141,8 @@ class AgentLoop:
             
             # Handle tool failure with fallback
             if not tool_result.ok:
-                fallback_suggestion = recommend_fallback(selected_tool)
+                used_tools = set(memory.previous_results.keys())
+                fallback_suggestion = recommend_fallback(selected_tool, used_tools)
                 self.display.console.print(f"[yellow]💡 Fallback suggestion: {fallback_suggestion}[/yellow]")
                 
                 memory.add_trace_entry('fallback', {
@@ -343,18 +354,88 @@ class AgentLoop:
         
         return evidence_list
     
-    def _explain_tool_choice(self, tool_name: str, hypotheses: Dict[str, Any]) -> str:
-        """Explain why a specific tool was chosen."""
-        top_hypothesis = max(hypotheses.values(), key=lambda h: h.belief)
+    def _explain_tool_choice(self, tool_name: str, hypothesis_name: str, hypotheses: Dict[str, Any], ctx) -> str:
+        """Explain why a specific tool was chosen with detailed reasoning."""
+        target_hypothesis = hypotheses.get(hypothesis_name)
+        if not target_hypothesis:
+            return f'Selected {tool_name} for further investigation'
         
-        explanations = {
-            'ads_metrics': f'Analyzing advertising data to investigate {top_hypothesis.name} (belief: {top_hypothesis.belief:.2f})',
-            'competitor': f'Checking competitive landscape for {top_hypothesis.name} (belief: {top_hypothesis.belief:.2f})',
-            'listing_audit': f'Auditing listing quality related to {top_hypothesis.name} (belief: {top_hypothesis.belief:.2f})',
-            'inventory': f'Verifying inventory status impact on {top_hypothesis.name} (belief: {top_hypothesis.belief:.2f})'
+        # Get tool mapping and used tools for context
+        tool_mapping = self.policy.get_tool_preferences()
+        used_tools = set(ctx.previous_results.keys())
+        
+        # Sort hypotheses by belief to explain selection logic
+        sorted_hyps = sorted(hypotheses.items(), key=lambda x: x[1].belief, reverse=True)
+        
+        # Build hypothesis selection reasoning
+        hyp_reasoning = self._build_hypothesis_selection_reasoning(hypothesis_name, sorted_hyps, tool_mapping, used_tools)
+        
+        # Build tool selection reasoning  
+        tool_reasoning = self._build_tool_selection_reasoning(tool_name, hypothesis_name, tool_mapping, used_tools)
+        
+        # Combine explanations
+        base_explanations = {
+            'ads_metrics': f'analyzing keyword performance, CTR, and ACOS metrics. This data will help determine if bid amounts are adequate or if keyword coverage needs improvement.',
+            'competitor': f'investigating competitive landscape and market positioning. This analysis will reveal if competitor pressure is limiting performance or if our positioning needs adjustment.',
+            'listing_audit': f'conducting comprehensive listing quality assessment. This audit will identify content, image, and SEO optimization opportunities affecting conversion rates.',
+            'inventory': f'examining inventory levels and restocking timeline. Low inventory may justify conservative bidding strategies or explain reduced advertising aggressiveness.'
         }
         
-        return explanations.get(tool_name, f'Selected {tool_name} for further investigation')
+        tool_purpose = base_explanations.get(tool_name, f'gathering additional information')
+        
+        return f"{hyp_reasoning} {tool_reasoning} We're {tool_purpose}"
+    
+    def _build_hypothesis_selection_reasoning(self, selected_hyp: str, sorted_hyps: list, tool_mapping: dict, used_tools: set) -> str:
+        """Build reasoning for why this hypothesis was selected for investigation."""
+        # Find position of selected hypothesis
+        hyp_names = [name for name, _ in sorted_hyps]
+        selected_pos = hyp_names.index(selected_hyp) if selected_hyp in hyp_names else -1
+        
+        if selected_pos == 0:
+            return f"Targeting the top hypothesis '{self.display._format_hypothesis_name(selected_hyp)}' (belief={sorted_hyps[0][1].belief:.2f})."
+        elif selected_pos == 1:
+            return f"Moving to the second-highest hypothesis '{self.display._format_hypothesis_name(selected_hyp)}' (belief={sorted_hyps[1][1].belief:.2f}) since the top hypothesis tools are exhausted."
+        elif selected_pos > 1:
+            return f"Investigating '{self.display._format_hypothesis_name(selected_hyp)}' (belief={sorted_hyps[selected_pos][1].belief:.2f}) as higher-ranked hypotheses have completed their preferred tools."
+        else:
+            return f"Investigating '{self.display._format_hypothesis_name(selected_hyp)}'."
+    
+    def _build_tool_selection_reasoning(self, tool_name: str, hypothesis_name: str, tool_mapping: dict, used_tools: set) -> str:
+        """Build reasoning for why this specific tool was chosen for the hypothesis."""
+        hyp_tools = tool_mapping.get(hypothesis_name, [])
+        
+        if not hyp_tools:
+            return f"Using {tool_name} as fallback tool."
+        
+        # Check if this is the preferred tool
+        if hyp_tools and tool_name == hyp_tools[0]:
+            return f"Using the primary tool '{tool_name}' for this hypothesis."
+        elif tool_name in hyp_tools:
+            # Find which tools were already used
+            used_preferred = [t for t in hyp_tools if t in used_tools]
+            if used_preferred:
+                return f"Using '{tool_name}' since {', '.join(used_preferred)} {'has' if len(used_preferred) == 1 else 'have'} already been executed."
+            else:
+                return f"Using '{tool_name}' as a secondary tool for this hypothesis."
+        else:
+            return f"Using '{tool_name}' as alternative since preferred tools are exhausted."
+    
+    def _prepare_decision_context(self, hypotheses: Dict[str, Any], ctx) -> Dict[str, Any]:
+        """Prepare context information for decision display."""
+        top_hypothesis = max(hypotheses.values(), key=lambda h: h.belief) if hypotheses else None
+        
+        # Prepare tool status information (success/failure)
+        tool_results = {}
+        for tool_name, result in ctx.previous_results.items():
+            tool_results[tool_name] = result.ok  # True for success, False for failure
+        
+        return {
+            'tool_mapping': self.policy.get_tool_preferences(),
+            'used_tools': set(ctx.previous_results.keys()),
+            'tool_results': tool_results,  # New: tool name -> success status
+            'top_hypothesis': top_hypothesis.name if top_hypothesis else None,
+            'hypothesis_beliefs': {name: hyp.belief for name, hyp in hypotheses.items()}
+        }
     
     def _summarize_context(self, ctx) -> Dict[str, Any]:
         """Create a summary of current context for trace."""

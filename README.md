@@ -11,6 +11,24 @@ This project demonstrates Agent architecture (not workflow) by implementing an a
 - Adapts strategy based on evidence gathered
 - Provides actionable recommendations
 
+## Core Design Philosophy
+
+### Hypothesis-Driven Reasoning Architecture
+
+**This Agent adopts a hypothesis-driven reasoning architecture:**
+
+1. **Multi-Hypothesis Parallel Tracking** - Agent simultaneously maintains multiple possible problem hypotheses
+2. **Dynamic Tool Selection** - Selects the most appropriate diagnostic tools based on current belief state
+3. **Evidence Accumulation Updates** - Updates confidence levels for each hypothesis after each tool execution
+4. **Adaptive Decision Making** - Adjusts next strategy based on new evidence
+
+### Technical Architecture Highlights
+
+- **Modular Tool System**: ads_metrics, listing_audit, competitor, inventory, etc.
+- **Bayesian Belief Updates**: Quantifies uncertainty for scientific decision-making
+- **Complete Execution Tracking**: Detailed records of every decision process
+- **AI-Enhanced Report Generation**: Uses OpenAI GPT-4o to generate in-depth analysis reports with Chinese and English support
+
 ## Quick Start
 
 1. **Setup Environment**
@@ -30,17 +48,15 @@ This project demonstrates Agent architecture (not workflow) by implementing an a
    
    # Test conversion issues - agent should prioritize listing quality
    python demo.py --scenario scenarios/scenario_high_click_low_conv.json
+   
+   # Test early termination with ≥0.8 confidence (demonstrates immediate stop)
+   python demo.py --scenario scenarios/scenario_immediate_stop.json
    ```
 
 3. **Test Error Handling**
    ```bash
    # Simulate competitor tool failure to see fallback behavior
-   python demo.py --scenario scenarios/scenario_low_impr.json --break-competitor
-   ```
-
-4. **Run All Scenarios (Smoke Test)**
-   ```bash
-   ./scripts/smoke.sh
+   python demo.py --scenario scenarios/scenario_low_impr.json --break-inventory
    ```
 
 ## Expected Outputs
@@ -103,6 +119,42 @@ The agent automatically extracts evidence from tool results:
 - **Weak Evidence** (+0.05): Minor indicators (e.g., low inventory affecting bids)
 - **Counter Evidence** (-0.1): Evidence against hypothesis
 
+## Tool System Overview
+
+The agent is equipped with 4 specialized diagnostic tools, each designed for specific analysis functions:
+
+### 1. Ads Metrics Tool - Advertisement Data Analysis
+- **Function**: Analyzes keyword and campaign performance data
+- **Output**: CTR, CVR, ACOS, impression metrics, and conversion issues
+- **Intelligent Analysis**: Automatically identifies inefficient keywords and high-cost problems
+- **Use Cases**: Foundation diagnosis for all advertising problems
+
+### 2. Competitor Tool - Market Competition Analysis
+- **Function**: Evaluates market competition pressure and positioning
+- **Output**: Price competitiveness, advertising competition intensity, quality benchmarks
+- **Intelligent Analysis**: Quantifies competitive pressure, identifies threats and opportunities
+- **Use Cases**: Traffic issues, pricing strategy problems
+
+### 3. Listing Audit Tool - Product Page Quality Review
+- **Function**: Comprehensive evaluation of product listing quality
+- **Output**: Title optimization, image quality, A+ content, rating analysis
+- **Intelligent Analysis**: Calculates conversion impact potential, provides optimization recommendations
+- **Use Cases**: Low conversion rates, product competitiveness issues
+
+### 4. Inventory Tool - Stock Status Monitoring
+- **Function**: Monitors inventory levels and restocking status
+- **Output**: Days of inventory, stockout risk, restocking timeline
+- **Intelligent Analysis**: Assesses impact on advertising strategy
+- **Use Cases**: Abnormal advertising performance, inventory constraint issues
+
+### Tool Collaboration Mechanism
+
+The agent doesn't simply call tools, but engages in intelligent collaboration:
+- **Dynamic Selection**: Chooses most relevant tools based on current hypotheses
+- **Result Integration**: Synthesizes results from multiple tools for comprehensive analysis
+- **Hypothesis Updates**: Adjusts problem hypotheses based on tool results
+- **Strategy Adaptation**: Modifies next actions based on new evidence
+
 ## Evaluation Criteria Mapping
 
 ### Agent Architecture (60%)
@@ -136,8 +188,18 @@ The agent demonstrates true autonomy by:
 
 ### Core Loop: Observe → Think → Act
 1. **Observe**: Gather context from scenario, previous tool results, and current state
-2. **Think**: Update hypothesis confidence scores based on collected evidence
-3. **Act**: Select the most informative tool to run next, or terminate if confident enough
+2. **Think**: Update hypothesis confidence scores based on collected evidence  
+3. **Decide**: Display tool mapping with usage status and select next tool
+4. **Act**: Execute selected tool and collect evidence, or terminate if confident enough
+
+**Enhanced Decision Display:**
+- **Tool Mapping Table**: Shows hypothesis → tools mapping with real-time status
+- **Usage Tracking**: Visual indicators (✓) for completed tools  
+- **Hypothesis Status Identifiers**:
+  - 🔍 marks the currently investigated hypothesis
+  - ⭐ marks the highest-confidence hypothesis
+- **Status Ratios**: Shows tool completion ratios (e.g., 1/2, 2/2) for each hypothesis
+- **Detailed Reasoning**: Explains hypothesis selection logic and tool choice rationale
 
 ### Belief System & Information Gain
 - Maintains confidence scores (0.0-1.0) for 5 core hypotheses about ad performance issues
@@ -146,17 +208,57 @@ The agent demonstrates true autonomy by:
 - Different scenario goals lead to different initial belief distributions
 
 ### Tool Selection Heuristics
-- **High belief in H1 (Low Bids)** → prioritize `ads_metrics` to analyze bid performance
-- **High belief in H2 (Keyword Coverage)** → use `ads_metrics` + `listing_audit` for keyword analysis  
-- **High belief in H3 (Competitor Pressure)** → prioritize `competitor` tool
-- **High belief in H4 (Listing Quality)** → use `listing_audit` first
-- **High belief in H5 (Broad Match Waste)** → analyze with `ads_metrics`
+
+The agent uses a hypothesis-to-tool mapping system for optimal information gain:
+
+| Hypothesis | Primary Tools | Secondary Tools | Selection Logic |
+|------------|---------------|-----------------|-----------------|
+| **H1: Low Bids** | `ads_metrics` | - | Direct bid performance analysis |
+| **H2: Keyword Coverage** | `ads_metrics` | `listing_audit` | Keyword performance + content analysis |
+| **H3: Competitor Pressure** | `competitor` | `ads_metrics` | Market analysis first, then performance |
+| **H4: Listing Quality** | `listing_audit` | `competitor` | Quality audit + competitive context |
+| **H5: Broad Match Waste** | `ads_metrics` | - | Direct keyword waste analysis |
+
+**Tool Selection Process:**
+1. Rank hypotheses by confidence (belief score)
+2. Select tools from top 2 hypotheses' preferred tools
+3. Prefer unused tools for maximum information gain
+4. Fall back to any unused tool if preferred tools exhausted
 
 ### Termination Criteria
-- **High Confidence**: belief ≥ 0.7 in primary hypothesis
-- **Minimum Exploration**: At least 3 decision cycles completed
-- **Tool Exhaustion**: All relevant tools used with inconclusive results
-- **Maximum Iterations**: Hard limit at 5 steps to prevent infinite loops
+
+The agent uses a sophisticated multi-layer stopping mechanism:
+
+**1. Minimum Exploration Requirement (Hard Requirement)**
+- Forces at least 3 decision cycles regardless of confidence level (assignment requirement)
+- Prevents premature conclusions from limited data
+- Ensures sufficient evidence collection and analysis
+
+**2. Very High Confidence (≥ 0.8) + Minimum Steps**
+- Terminates when primary hypothesis reaches 80%+ confidence AND at least 3 steps completed
+- Indicates overwhelming evidence for a specific issue
+
+**3. High Confidence (≥ 0.7) + Tool Completion + Minimum Steps**  
+- Stops when primary hypothesis reaches 70%+ confidence AND
+- All preferred tools for that hypothesis have been executed AND
+- At least 3 decision cycles have been completed
+
+**4. Maximum Iteration Limits**
+- Hard limit at 5 steps to prevent infinite loops
+- Ensures timely completion even with inconclusive evidence
+
+**5. Tool Exhaustion**
+- Stops when no more informative tools are available
+- Graceful termination when evidence gathering is complete
+
+**Example Decision Flow:**
+```
+Step 1: Confidence 0.8 → Continue (minimum 3 steps required)
+Step 2: Confidence 0.8 → Continue (minimum 3 steps required)  
+Step 3: Confidence 0.8+ → Stop (minimum requirement met + high confidence)
+
+Assignment Hard Requirement: Must complete at least 3 decision iterations regardless of confidence
+```
 
 ### Error Handling & Fallbacks
 - Tool timeouts with automatic retry (1 retry with exponential backoff)
@@ -172,8 +274,8 @@ The agent includes comprehensive error handling:
 # Normal execution - should complete successfully
 python demo.py --scenario scenarios/scenario_low_impr.json
 
-# Simulated failure - competitor tool fails, agent adapts
-python demo.py --scenario scenarios/scenario_low_impr.json --break-competitor
+# Simulated failure - inventory tool fails, agent adapts
+python demo.py --scenario scenarios/scenario_low_impr.json --break-inventory
 ```
 
 **Expected Fallback Behavior:**
@@ -185,37 +287,12 @@ python demo.py --scenario scenarios/scenario_low_impr.json --break-competitor
 ## Testing & Validation
 
 ```bash
-# Run comprehensive smoke test
-./scripts/smoke.sh
 
 # Test individual scenarios
 python demo.py --scenario scenarios/scenario_low_impr.json          # → Should focus on bids/competition
 python demo.py --scenario scenarios/scenario_high_acos.json         # → Should focus on waste reduction  
 python demo.py --scenario scenarios/scenario_high_click_low_conv.json # → Should focus on listing quality
+python demo.py --scenario scenarios/scenario_low_impr.json --break-inventory # Simulated failure - inventory tool fails, agent adapts
 ```
 
-## Video Demo Script (5-8 minutes)
-
-### Segment 1: Design Rationale (1-2 min)
-- "This is an AI Agent, not a workflow - it makes autonomous decisions"
-- "Show observe-think-act loop with dynamic tool selection"
-- "Belief system updates based on evidence, not fixed rules"
-
-### Segment 2: Different Paths Demo (3-4 min)  
-- **Command 1**: `python demo.py --scenario scenarios/scenario_low_impr.json`
-  - Show agent prioritizing ads_metrics → competitor (bid/competition focus)
-  - Point out belief updates and reasoning
-- **Command 2**: `python demo.py --scenario scenarios/scenario_high_acos.json`  
-  - Show different tool selection (ads_metrics first for waste analysis)
-  - Highlight different final recommendations
-
-### Segment 3: Error Handling (1-2 min)
-- **Command 3**: `python demo.py --scenario scenarios/scenario_low_impr.json --break-competitor`
-- Show graceful degradation and fallback suggestions
-- Demonstrate agent continues with alternative strategy
-
-### Key Points to Emphasize
-- **Decision logs**: Point out "DECIDE" sections showing tool selection reasoning
-- **Belief updates**: Highlight how evidence changes hypothesis confidence  
-- **Final rankings**: Show how different scenarios lead to different hypothesis rankings
-- **Actionable output**: JSON + Markdown recommendations ready for implementation# ad-agents
+# ad-agents

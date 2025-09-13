@@ -24,7 +24,13 @@ class InventoryTool(BaseTool):
         
         Expected context:
         - scenario_dir: Path to scenario data directory
+        - flags: Dict that may contain 'break_inventory' for testing
         """
+        # Check for test mode break
+        flags = ctx.get('flags', {})
+        if flags.get('break_inventory', False):
+            raise DataMissingError("Simulated inventory data unavailable (test mode)")
+        
         scenario_dir = Path(ctx['scenario_dir'])
         file_path = scenario_dir / 'inventory.json'
         

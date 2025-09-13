@@ -26,7 +26,13 @@ class AdsMetricsTool(BaseTool):
         Expected context:
         - scenario_dir: Path to scenario data directory
         - mode: 'keyword' or 'campaign' (defaults to 'keyword')
+        - flags: Dict that may contain 'break_ads' for testing
         """
+        # Check for test mode break
+        flags = ctx.get('flags', {})
+        if flags.get('break_ads', False):
+            raise DataMissingError("Simulated ads metrics data unavailable (test mode)")
+        
         scenario_dir = Path(ctx['scenario_dir'])
         mode = ctx.get('mode', 'keyword')
         

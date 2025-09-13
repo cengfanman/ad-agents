@@ -129,6 +129,8 @@ dmypy.json
 .pyre/
 
 # Project specific
-/trace/
-*.json.bak
+trace/
+*.log
 task.txt
+
+analysis_*.md

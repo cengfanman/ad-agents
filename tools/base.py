@@ -60,6 +60,10 @@ def wrap_call(func: Callable) -> Callable:
                 last_error = e
                 elapsed_ms = int((time.time() - start_time) * 1000)
                 
+                # Print retry information for visibility
+                if attempt < attempts - 1:
+                    print(f"🔄 Tool '{self.name}' failed on attempt {attempt + 1}, retrying... (Error: {str(e)[:50]}{'...' if len(str(e)) > 50 else ''})")
+                
                 # If this is the last attempt or a critical error, return failure
                 if attempt == attempts - 1:
                     return ToolResult(

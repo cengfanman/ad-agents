@@ -95,11 +95,25 @@ class ReasoningDisplay:
         
         self.console.print(panel)
     
-    def show_decision(self, tool_choice: str, reasoning: str) -> None:
-        """Display tool selection decision and reasoning."""
+    def show_decision(self, tool_choice: str, reasoning: str, decision_context: Dict[str, Any] = None, current_hypothesis: str = None) -> None:
+        """Display tool selection decision and reasoning with tool mapping."""
         
         title = "🎯 DECIDE: Tool Selection"
         
+        # Show tool mapping if context is provided
+        if decision_context and 'tool_mapping' in decision_context:
+            # Add current hypothesis to decision context for display
+            if current_hypothesis:
+                decision_context['current_hypothesis'] = current_hypothesis
+            
+            self.console.print(Panel(
+                self._create_tool_mapping_display(decision_context),
+                title="🗺️ Tool Mapping",
+                title_align="left",
+                border_style="cyan"
+            ))
+        
+        # Show decision
         if tool_choice:
             content = f"**Selected Tool:** `{tool_choice}`\n\n**Reasoning:** {reasoning}"
         else:
@@ -113,6 +127,81 @@ class ReasoningDisplay:
         )
         
         self.console.print(panel)
+    
+    def _create_tool_mapping_display(self, decision_context: Dict[str, Any]) -> Table:
+        """Create tool mapping table display."""
+        tool_mapping = decision_context['tool_mapping']
+        used_tools = decision_context.get('used_tools', set())
+        tool_results = decision_context.get('tool_results', {})  # tool_name -> success status
+        top_hypothesis = decision_context.get('top_hypothesis', '')
+        current_hypothesis = decision_context.get('current_hypothesis', '')
+        
+        # Create table for tool mapping
+        table = Table(show_header=True, header_style="bold cyan", show_lines=True)
+        table.add_column("Hypothesis", style="white", width=20)
+        table.add_column("Tools", style="dim white", width=30)
+        table.add_column("Status", style="white", width=10)
+        
+        # Sort by hypothesis belief if available
+        hypothesis_beliefs = decision_context.get('hypothesis_beliefs', {})
+        sorted_hypotheses = sorted(tool_mapping.items(), 
+                                 key=lambda x: hypothesis_beliefs.get(x[0], 0), 
+                                 reverse=True)
+        
+        for hyp_name, tools in sorted_hypotheses:
+            hyp_display = self._format_hypothesis_name(hyp_name)
+            
+            # Add special identifiers
+            markers = []
+            
+            # Mark the currently investigated hypothesis
+            if hyp_name == current_hypothesis:
+                markers.append("🔍")
+            
+            # Mark the top hypothesis (highest confidence)
+            if hyp_name == top_hypothesis:
+                markers.append("⭐")
+            
+            # Apply markers
+            if markers:
+                marker_str = " ".join(markers)
+                hyp_display = f"[bold yellow]{hyp_display}[/bold yellow] {marker_str}"
+            
+            # Format tools with status
+            tool_statuses = []
+            for tool in tools:
+                if tool in used_tools:
+                    # Check if tool succeeded or failed
+                    success = tool_results.get(tool, True)  # Default to True for backward compatibility
+                    if success:
+                        tool_statuses.append(f"[bright_green]{tool} ✓[/bright_green]")
+                    else:
+                        tool_statuses.append(f"[bright_red]{tool} ❌[/bright_red]")
+                else:
+                    tool_statuses.append(f"[white]{tool}[/white]")
+            
+            tools_str = ", ".join(tool_statuses)
+            
+            # Show usage status (only count completed tools, regardless of success/failure)
+            used_count = sum(1 for tool in tools if tool in used_tools)
+            successful_count = sum(1 for tool in tools if tool in used_tools and tool_results.get(tool, True))
+            
+            # Show total attempted / total tools
+            status = f"{used_count}/{len(tools)}"
+            if used_count == len(tools):
+                # All tools attempted - color based on success rate
+                if successful_count == len(tools):
+                    status = f"[bright_green]{status}[/bright_green]"  # All successful
+                elif successful_count > 0:
+                    status = f"[bright_yellow]{status}[/bright_yellow]"  # Mixed results
+                else:
+                    status = f"[bright_red]{status}[/bright_red]"  # All failed
+            elif used_count > 0:
+                status = f"[bright_yellow]{status}[/bright_yellow]"  # Partially completed
+            
+            table.add_row(hyp_display, tools_str, status)
+        
+        return table
     
     def show_tool_result(self, result: ToolResult) -> None:
         """Display tool execution results."""
