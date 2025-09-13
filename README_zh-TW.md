@@ -49,8 +49,6 @@
    # 測試轉化問題 - 代理應優先檢查清單品質
    python demo.py --scenario scenarios/scenario_high_click_low_conv.json
    
-   # 測試 ≥0.8 信心早期終止（展示立即停止）
-   python demo.py --scenario scenarios/scenario_immediate_stop.json
    ```
 
 3. **測試錯誤處理**

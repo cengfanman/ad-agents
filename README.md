@@ -49,8 +49,6 @@ This project demonstrates Agent architecture (not workflow) by implementing an a
    # Test conversion issues - agent should prioritize listing quality
    python demo.py --scenario scenarios/scenario_high_click_low_conv.json
    
-   # Test early termination with ≥0.8 confidence (demonstrates immediate stop)
-   python demo.py --scenario scenarios/scenario_immediate_stop.json
    ```
 
 3. **Test Error Handling**
