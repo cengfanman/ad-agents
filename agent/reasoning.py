@@ -132,6 +132,7 @@ class ReasoningDisplay:
         """Create tool mapping table display."""
         tool_mapping = decision_context['tool_mapping']
         used_tools = decision_context.get('used_tools', set())
+        tool_results = decision_context.get('tool_results', {})  # tool_name -> success status
         top_hypothesis = decision_context.get('top_hypothesis', '')
         current_hypothesis = decision_context.get('current_hypothesis', '')
         
@@ -170,19 +171,33 @@ class ReasoningDisplay:
             tool_statuses = []
             for tool in tools:
                 if tool in used_tools:
-                    tool_statuses.append(f"[dim green]{tool} ✓[/dim green]")
+                    # Check if tool succeeded or failed
+                    success = tool_results.get(tool, True)  # Default to True for backward compatibility
+                    if success:
+                        tool_statuses.append(f"[bright_green]{tool} ✓[/bright_green]")
+                    else:
+                        tool_statuses.append(f"[bright_red]{tool} ❌[/bright_red]")
                 else:
                     tool_statuses.append(f"[white]{tool}[/white]")
             
             tools_str = ", ".join(tool_statuses)
             
-            # Show usage status
+            # Show usage status (only count completed tools, regardless of success/failure)
             used_count = sum(1 for tool in tools if tool in used_tools)
+            successful_count = sum(1 for tool in tools if tool in used_tools and tool_results.get(tool, True))
+            
+            # Show total attempted / total tools
             status = f"{used_count}/{len(tools)}"
             if used_count == len(tools):
-                status = f"[dim green]{status}[/dim green]"
+                # All tools attempted - color based on success rate
+                if successful_count == len(tools):
+                    status = f"[bright_green]{status}[/bright_green]"  # All successful
+                elif successful_count > 0:
+                    status = f"[bright_yellow]{status}[/bright_yellow]"  # Mixed results
+                else:
+                    status = f"[bright_red]{status}[/bright_red]"  # All failed
             elif used_count > 0:
-                status = f"[yellow]{status}[/yellow]"
+                status = f"[bright_yellow]{status}[/bright_yellow]"  # Partially completed
             
             table.add_row(hyp_display, tools_str, status)
         

@@ -424,9 +424,15 @@ class AgentLoop:
         """Prepare context information for decision display."""
         top_hypothesis = max(hypotheses.values(), key=lambda h: h.belief) if hypotheses else None
         
+        # Prepare tool status information (success/failure)
+        tool_results = {}
+        for tool_name, result in ctx.previous_results.items():
+            tool_results[tool_name] = result.ok  # True for success, False for failure
+        
         return {
             'tool_mapping': self.policy.get_tool_preferences(),
             'used_tools': set(ctx.previous_results.keys()),
+            'tool_results': tool_results,  # New: tool name -> success status
             'top_hypothesis': top_hypothesis.name if top_hypothesis else None,
             'hypothesis_beliefs': {name: hyp.belief for name, hyp in hypotheses.items()}
         }
