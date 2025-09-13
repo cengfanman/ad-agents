@@ -1,0 +1,6 @@
+{
+  "asin": "B0MOCKTEST",
+  "goal": "increase_impressions", 
+  "lookback_days": 7,
+  "notes": "Demo scenario to show ≥0.8 confidence early termination. Manually configured for immediate high-confidence stopping."
+}

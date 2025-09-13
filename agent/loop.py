@@ -87,7 +87,11 @@ class AgentLoop:
             # DECIDE: Select next action
             should_stop, stop_reason = self.policy.should_stop(memory.hypotheses, ctx)
             
-            if should_stop and step >= 3:
+            # Allow immediate stop for very high confidence (≥ 0.8), otherwise require minimum 3 steps
+            top_hypothesis = max(memory.hypotheses.values(), key=lambda h: h.belief) if memory.hypotheses else None
+            immediate_stop = top_hypothesis and top_hypothesis.belief >= 0.8
+            
+            if should_stop and (immediate_stop or step >= 3):
                 # Prepare decision context for display
                 decision_context = self._prepare_decision_context(memory.hypotheses, ctx)
                 self.display.show_decision(None, stop_reason, decision_context)
@@ -99,9 +103,9 @@ class AgentLoop:
                 break
             
             # Select tool
-            selected_tool = self.policy.select_next_tool(memory.hypotheses, ctx)
+            tool_selection = self.policy.select_next_tool(memory.hypotheses, ctx)
             
-            if not selected_tool:
+            if not tool_selection:
                 stop_reason = "No more informative tools available"
                 decision_context = self._prepare_decision_context(memory.hypotheses, ctx)
                 self.display.show_decision(None, stop_reason, decision_context)
@@ -112,8 +116,10 @@ class AgentLoop:
                 })
                 break
             
+            selected_tool, selected_hypothesis = tool_selection
+            
             # Show decision
-            decision_reasoning = self._explain_tool_choice(selected_tool, memory.hypotheses)
+            decision_reasoning = self._explain_tool_choice(selected_tool, selected_hypothesis, memory.hypotheses)
             decision_context = self._prepare_decision_context(memory.hypotheses, ctx)
             self.display.show_decision(selected_tool, decision_reasoning, decision_context)
             
@@ -348,15 +354,17 @@ class AgentLoop:
         
         return evidence_list
     
-    def _explain_tool_choice(self, tool_name: str, hypotheses: Dict[str, Any]) -> str:
+    def _explain_tool_choice(self, tool_name: str, hypothesis_name: str, hypotheses: Dict[str, Any]) -> str:
         """Explain why a specific tool was chosen."""
-        top_hypothesis = max(hypotheses.values(), key=lambda h: h.belief)
+        target_hypothesis = hypotheses.get(hypothesis_name)
+        if not target_hypothesis:
+            return f'Selected {tool_name} for further investigation'
         
         explanations = {
-            'ads_metrics': f'Analyzing advertising data to investigate {top_hypothesis.name} (belief: {top_hypothesis.belief:.2f})',
-            'competitor': f'Checking competitive landscape for {top_hypothesis.name} (belief: {top_hypothesis.belief:.2f})',
-            'listing_audit': f'Auditing listing quality related to {top_hypothesis.name} (belief: {top_hypothesis.belief:.2f})',
-            'inventory': f'Verifying inventory status impact on {top_hypothesis.name} (belief: {top_hypothesis.belief:.2f})'
+            'ads_metrics': f'Analyzing keyword performance, CTR, and ACOS metrics to gather evidence for {target_hypothesis.name} hypothesis (current belief: {target_hypothesis.belief:.2f}). This data will help determine if bid amounts are adequate or if keyword coverage needs improvement.',
+            'competitor': f'Investigating competitive landscape and market positioning to evaluate {target_hypothesis.name} hypothesis (current belief: {target_hypothesis.belief:.2f}). This analysis will reveal if competitor pressure is limiting performance or if our positioning needs adjustment.',
+            'listing_audit': f'Conducting comprehensive listing quality assessment to examine {target_hypothesis.name} hypothesis (current belief: {target_hypothesis.belief:.2f}). This audit will identify content, image, and SEO optimization opportunities affecting conversion rates.',
+            'inventory': f'Examining inventory levels and restocking timeline to assess impact on {target_hypothesis.name} hypothesis (current belief: {target_hypothesis.belief:.2f}). Low inventory may justify conservative bidding strategies or explain reduced advertising aggressiveness.'
         }
         
         return explanations.get(tool_name, f'Selected {tool_name} for further investigation')

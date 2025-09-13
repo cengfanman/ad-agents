@@ -1,0 +1,43 @@
+{
+  "keywords": [
+    {
+      "keyword": "wireless mouse",
+      "match": "broad",
+      "impressions": 150,
+      "clicks": 1,
+      "ctr": 0.007,
+      "cpc": 0.25,
+      "spend": 0.25,
+      "orders": 0,
+      "cvr": 0.0,
+      "revenue": 0.0,
+      "acos": 1.0
+    },
+    {
+      "keyword": "bluetooth mouse", 
+      "match": "phrase",
+      "impressions": 200,
+      "clicks": 2,
+      "ctr": 0.01,
+      "cpc": 0.30,
+      "spend": 0.60,
+      "orders": 0,
+      "cvr": 0.0,
+      "revenue": 0.0,
+      "acos": 1.0
+    },
+    {
+      "keyword": "computer mouse",
+      "match": "exact", 
+      "impressions": 100,
+      "clicks": 1,
+      "ctr": 0.01,
+      "cpc": 0.35,
+      "spend": 0.35,
+      "orders": 0,
+      "cvr": 0.0,
+      "revenue": 0.0,
+      "acos": 1.0
+    }
+  ]
+}

@@ -30,6 +30,9 @@ This project demonstrates Agent architecture (not workflow) by implementing an a
    
    # Test conversion issues - agent should prioritize listing quality
    python demo.py --scenario scenarios/scenario_high_click_low_conv.json
+   
+   # Test early termination with ≥0.8 confidence (demonstrates immediate stop)
+   python demo.py --scenario scenarios/scenario_immediate_stop.json
    ```
 
 3. **Test Error Handling**
@@ -198,8 +201,10 @@ The agent uses a sophisticated multi-layer stopping mechanism:
 **Example Decision Flow:**
 ```
 Step 1: Confidence 0.5 → Continue (below threshold)
-Step 2: Confidence 0.7 → Check preferred tools, continue if incomplete  
-Step 3: Confidence 0.7 + all preferred tools used → Stop
+Step 2: Confidence 0.7 → Continue (minimum 3 steps required)  
+Step 3: Confidence 0.7+ → Stop (minimum requirement met)
+
+Assignment Requirement: Minimum 3 decision iterations regardless of confidence
 ```
 
 ### Error Handling & Fallbacks

@@ -1,0 +1,6 @@
+{
+  "asin": "B0MOCKSTOP",
+  "goal": "increase_impressions", 
+  "lookback_days": 7,
+  "notes": "Extreme scenario designed to trigger immediate ≥0.8 confidence termination in step 1."
+}
